@@ -8,7 +8,7 @@ let file = ""
 
 app.use(express.static(__dirname + "/public"));
 app.use(function (req, res) {
-    url = new URL("http://localhost:80"+req.url)
+    url = new URL("http://localhost:3000"+req.url)
     if (fs.existsSync(__dirname + "/public" + url.pathname)){
     res.sendFile(__dirname + "/public" + req.url);
     } else {
@@ -37,6 +37,6 @@ io.on("connection", (socket) => {
     });
 });
 
-http.listen(80, function () {
-    console.log("http listening on *:80");
+http.listen(3000, function () {
+    console.log("http listening on *:3000");
 });
