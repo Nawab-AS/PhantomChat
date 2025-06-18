@@ -3,8 +3,13 @@ var app = express();
 var http = require("http").createServer(app);
 let io = require("socket.io")(http);
 let fs = require("fs");
-const PASSWORD = "testing123";
+require('dotenv').config();
+const PASSWORD = process.env.PASSWORD;
 let file = "";
+
+if (PASSWORD == undefined) {
+    throw new Error("No password set");
+}
 
 app.use(express.static(__dirname + "/public"));
 app.use(function (req, res) {
