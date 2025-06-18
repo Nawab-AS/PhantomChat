@@ -1,5 +1,5 @@
 {
-  "name": "PhantomChat",
+  "name": "PhantomChat", 
   "version": "1.0.0",
   "description": "A simple chat app using socket.io",
   "dependencies": {
