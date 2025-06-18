@@ -11,19 +11,25 @@ if (PASSWORD == undefined) {
     throw new Error("No password set");
 }
 
+// routes
 app.use(express.static(__dirname + "/public"));
-app.use(function (req, res) {
-    url = new URL("http://localhost:80"+req.url)
-    if (fs.existsSync(__dirname + "/public" + url.pathname)){
-    res.sendFile(__dirname + "/public" + req.url);
+
+app.get("/", (req, res) => { // home page
+    res.sendFile(__dirname + "/public/login/index.html");
+});
+
+app.use(function (req, res) { // other files
+    if (fs.existsSync(__dirname + "/public" + req.url)){
+        res.sendFile(__dirname + "/public" + req.url); // send file if path exists
     } else {
         res.sendFile(__dirname + "/public/404.html");
     }
 });
 
+
+// socket.io
 io.on("connection", (socket) => {
     console.log("User connected");
-
     let auth = false;
 
     socket.on("auth", (data) => {
