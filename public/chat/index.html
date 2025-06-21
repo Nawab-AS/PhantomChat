@@ -6,35 +6,45 @@
     <title>Chat</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link href="/chat/styles.css" rel="stylesheet" type="text/css" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <script defer src="/chat/index.js"></script>
+    <script defer src="/WS-CLIENT.js"></script>
   </head>
 
   <body>
-    <div id="UI">
-      <ul id="userlist"></ul>
-      <div id="chatArea">
-        <titleBar>Sam</titleBar>
-        <div id="messages">
-          <div>
-            <p class="ByMe">Hey!</p>
-            <p>Hi there!</p>
-            <p class="ByMe">How's your day going?</p>
-            <p>Pretty good, thanks! And yours?</p>
-            <p class="ByMe">Great, just working on a project.</p>
-            <p>Nice! Good luck with it.</p>
-            <p class="ByMe">Thanks! Are you working on anything interesting?</p>
-            <p>Yeah, I'm learning JavaScript right now.</p>
-            <p class="ByMe">That's awesome! What are you building?</p>
-            <p>I'm making a simple to-do list app to practice.</p>
-            <p class="ByMe">Great choice. Are you using any frameworks?</p>
-            <p>No, just plain HTML, CSS, and JavaScript for now.</p>
-            <p class="ByMe">That's the best way to learn the basics.</p>
-            <p>Exactly! Do you have any tips for beginners?</p>
-            <p class="ByMe">Break problems into small steps and use console.log a lot.</p>
-            <p>Thanks! I'll keep that in mind while coding.</p>
-          </div>
+    <div id="sidePanel">
+      <div id="settingsBar">
+        <p id="greeting"></p>
+        <div id="buttons">
+          <form action="/logout" method="post">
+            <button type="submit" id="logout">Logout</button>
+          </form>
+          <form action="/settings" method="get">
+            <button type="submit" id="settingsButton">Settings</button>
+          </form>
         </div>
       </div>
+      <ul id="userlist"></ul>
     </div>
-    <script src="/chat/index.js"></script>
+    <div id="chatArea">
+      <titleBar>Sam</titleBar>
+      <img src="images/loading.gif" alt="loadingGIF" id="loadingGIF" style="display: initial;">
+      <div id="messages" style="display: none;">
+        <p class="ByMe">Hello</p>
+        <p>Hello again</p>
+        <p class="ByMe">
+          Lorem, ipsum dolor sit amet consectetur adipisicing elit. Esse eius
+          sit odio blanditiis cum suscipit quidem numquam. Aspernatur officiis
+          labore, animi sunt vel ab reiciendis ipsa cum, deleniti quas voluptate
+          quis, laboriosam obcaecati nostrum minus fugit mollitia ipsam? Odio
+          non omnis eum culpa perferendis similique iusto tempora neque ipsam
+          error.
+        </p>
+      </div>
+      <form id="sendMessage" autocomplete="off">
+        <textarea required type="text"/></textarea>
+        <button type="submit">Send</button>
+      </form>
+    </div>
   </body>
 </html>
