@@ -34,7 +34,6 @@ sendMessage.addEventListener("submit", (e) => {
 	if (!WS_sendData) return; // don't send if not connected to websocket
 	WS_sendData({type: "message", message: textarea.value, to: currentChat, from: cookies.get("username")});
 	textarea.value="";
-	textarea.blur();
 });
 
 textarea.addEventListener('keydown', function(event) {
