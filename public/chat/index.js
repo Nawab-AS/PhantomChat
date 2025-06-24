@@ -9,6 +9,7 @@ const cookies = new URLSearchParams(document.cookie.replaceAll("; ", "&"));
 // load messages
 var messages;
 var currentChat;
+var userData;
 var friends;
 fetch("/chat/api/userdata.json")
 	.then((res) => res.json())
@@ -16,10 +17,11 @@ fetch("/chat/api/userdata.json")
 		console.log("loaded",data)
 		messages = data.messages;
 		friends = data.friends;
-		for (let i = 0; i < friends.length -1; i++) {
-			addUser(friends[i]);
+		userData = data.userData;
+		for (let i = 0; i < friends.length; i++) {
+			addUser(friends[i].username, friends[i].user_id);
 		}
-		loadChat(friends[0]);
+		loadChat(friends[0]?.username || 'No one', friends[0]?.user_id);
 		document.getElementById("loadingGIF").style.display = "none";
 		messageArea.style.display = "flex";
 });
@@ -32,7 +34,8 @@ sendMessage.addEventListener("submit", (e) => {
 	e.preventDefault();
 	if (textarea.value == "") return; // don't send empty messages
 	if (!WS_sendData) return; // don't send if not connected to websocket
-	WS_sendData({type: "message", message: textarea.value, to: currentChat, from: cookies.get("username")});
+	console.log({type: "message", message: textarea.value, to: currentChat, from: userData.user_id});
+	WS_sendData({type: "message", message: textarea.value, to: currentChat, from: userData.user_id});
 	textarea.value="";
 });
 
@@ -47,10 +50,10 @@ textarea.addEventListener('keydown', function(event) {
 function nameClicked(event) {
 	let name = event.target.name || event.target.parentElement.name;
 	console.log(name, "clicked");
-	loadChat(name);
+	loadChat(name, event.target.user_id || event.target.parentElement.user_id);
 }
 
-function addUser(username) {
+function addUser(username, user_id) {
 	var li = document.createElement("li");
 	var icon = document.createElement("icon");
 	var p = document.createElement("p");
@@ -61,6 +64,7 @@ function addUser(username) {
 	userlist.appendChild(li);
 
 	li.name = username;
+	li.user_id = user_id;
 	li.addEventListener("click", nameClicked);
 }
 
@@ -74,10 +78,24 @@ function removeUser(username) {
 	return false;
 }
 
-function loadChat(name) {
+function loadChat(name, user_id) {
 	document.getElementById("loadingGIF").style.display = "none";
 	document.getElementsByTagName("titlebar")[0].innerHTML = name;
-	messageArea.innerHTML = ""; // clear messages	
+	messageArea.innerHTML = ""; // clear messages
+	currentChat = user_id;
+	let currentMessages = messages.filter(i=>(i.to == currentChat || i.from == currentChat));
+	currentMessages.sort((a, b) => (new Date(a.sent_at)).getTime() - (new Date(b.sent_at)).getTime());
+	currentMessages.forEach(i => {
+		addMessage(i);
+	});
+}
+
+function addMessage(messageObj) {
+	let message = document.createElement("p");
+	message.innerHTML = messageObj.message;
+	messageArea.appendChild(message);
+	messageArea.scrollTop = messageArea.scrollHeight; // scroll to bottom
+	messages.push(messageObj);
 }
 
 // Websocket functions
@@ -91,10 +109,7 @@ function setup_WS_client(websocket) {
 			return;
 		}		
 		if (packet.type == "message") {
-			let message = document.createElement("p");
-			message.innerHTML = packet.message;
-			messageArea.appendChild(message);
-			messageArea.scrollTop = messageArea.scrollHeight; // scroll to bottom
+			if (packet.to == userData.user_id || packet.from == userData.user_id) return addMessage(packet);
 		}
 	});
 }

@@ -6,13 +6,13 @@
 import { existsSync } from "fs";
 import { fileURLToPath } from 'url';
 import { dirname, join as joinPath } from 'path';
-import { authenticateLogin, getUserDataFromId } from "./database.js"
+import { authenticateLogin, getUserFriends, getUserDataFromId, getUserchats, getUserDataFromUsername, onSIGINT as onSIGINT_database } from "./database.js"
 import cookieParser from 'cookie-parser';
 import jwt from 'jsonwebtoken';
 import { Router as _router } from "express";
-const Router = _router();
 import dotenv from "dotenv";
 dotenv.config();
+const Router = _router();
 const SESSION_SECRET = process.env.SESSION_SECRET;
 
 // get the directory of this file
@@ -40,12 +40,12 @@ function createToken(data, res){
 
 function verifyToken(req, res){
   const token = req.cookies.authToken;
-  if (!token) return; false // no token
+  if (!token) return false; // no token
   let data;
   try {
     data = jwt.verify(token, SESSION_SECRET);
   } catch (err) {
-    res.clearCookie("authToken")
+    res.clearCookie("authToken");
     return false; // invalid token
   }
   if (!data) return false; // token has no data
@@ -90,13 +90,14 @@ export function router(WS_PORT, app) {
   });
 
   // Login request
-  Router.post("/login", (req, res) => {
+  Router.post("/login", async (req, res) => {
     const { username, password } = req.body;
-    const userId = authenticateLogin(username, password);
-    if (!userId) {
-      return res.redirect("/login?error=1");
-    }
-    createToken({userId: userId}, res);
+    const authenticated = await authenticateLogin(username, password);
+    if (!authenticated) return res.redirect("/login?error=1");
+
+    // authentication successful
+    const userData = await getUserDataFromUsername(username); // get user data from database
+    createToken({ userData }, res);
     res.cookie("username", username, cookieOptions);
     res.redirect("/chat");
   });
@@ -110,14 +111,16 @@ export function router(WS_PORT, app) {
   // WS Port api
   Router.get("/WS-PORT", (req, res) => {
     res.send(WS_PORT + "");
-  });
+  }); 
 
   // Chat messages API
-  Router.get("/chat/api/userdata.json", (req, res) => {
-    let authData = verifyToken(req, res);
+  Router.get("/chat/api/userdata.json", async (req, res) => {
+    const authData = verifyToken(req, res);
     if (!authData) return res.status(401).send("Unauthorized"); // invalid token
-    let userData = getUserDataFromId(authData.userId);
-    res.json(userData);
+    let userData = await getUserDataFromId(authData.userData.user_id);
+    let friends = await getUserFriends(authData.userData.user_id);
+    let messages = await getUserchats(authData.userData.user_id);
+    res.json({ friends, messages, userData });
   });
 
   // Serve Other files
@@ -133,3 +136,11 @@ export function router(WS_PORT, app) {
 
   return Router;
 };
+
+
+// handle SIGINT
+export async function onSIGINT() {
+  console.log("closing database connection...");
+  await onSIGINT_database();
+  console.log("database connection closed");
+}
