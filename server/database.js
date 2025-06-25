@@ -16,10 +16,11 @@ const pool = new Pool({
   password: DATABASE_URI.password,
   port: DATABASE_URI.port,
   max: 20,
-  idleTimeoutMillis: 30000,
-  ssl: { // TODO: remove this in production (SECURITY RISK)
-    rejectUnauthorized: false
-  }
+  idleTimeoutMillis: 30_000,
+  ssl: {
+    // TODO: remove this in production (SECURITY RISK)
+    rejectUnauthorized: false,
+  },
 });
 
 delete DATABASE_URI.password;
@@ -37,43 +38,62 @@ async function queryDatabase(query, params = []) {
   }
 }
 
-
 // high-level db functions
 export async function authenticateLogin(username, password) {
-  if (!username || !password) return false; 
-  return (await queryDatabase('SELECT * FROM AUTHENTICATE($1, $2)', [username, password]))[0].authenticate;
+  if (!username || !password) return false;
+  return (
+    await queryDatabase("SELECT * FROM AUTHENTICATE($1, $2)", [
+      username,
+      password,
+    ])
+  )[0].authenticate;
 }
 
 export async function getUserDataFromId(userId) {
-  return (await queryDatabase('SELECT user_id, username, user_created_at FROM users WHERE user_id = $1', [userId]))[0] || null;
+  return (
+    (
+      await queryDatabase(
+        "SELECT user_id, username, user_created_at FROM users WHERE user_id = $1",
+        [userId],
+      )
+    )[0] || null
+  );
 }
 
 export async function getUserDataFromUsername(username) {
   if (!username) return null;
-  const result = await queryDatabase('SELECT user_id, username, user_created_at FROM users WHERE username = $1', [username]);
+  const result = await queryDatabase(
+    "SELECT user_id, username, user_created_at FROM users WHERE username = $1",
+    [username],
+  );
   if (result.length === 0) return null; // user not found
   return result[0];
-} 
+}
 
 export async function getUserFriends(user_id) {
-  return (await queryDatabase('SELECT * FROM GET_FRIENDS($1)', [user_id]));
+  return await queryDatabase("SELECT * FROM GET_FRIENDS($1)", [user_id]);
 }
 
 export async function getUserchats(userId) {
-  let chats = (await queryDatabase('SELECT * FROM GET_CHATS($1)', [userId]));
-  return chats.map(i=>{return{message: i.message_text, to: i.recever_id, from: i.sender_id, sent_at: i.sent_at}});
+  let chats = await queryDatabase("SELECT * FROM GET_CHATS($1)", [userId]);
+  return chats.map((i) => {
+    return {
+      message: i.message_text,
+      to: i.recever_id,
+      from: i.sender_id,
+      sent_at: i.sent_at,
+    };
+  });
 }
 
 export async function saveMessage(message, to, from) {
-  await queryDatabase('CALL ADD_MESSAGE($1, $2, $3)', [message, from, to]);
+  await queryDatabase("CALL ADD_MESSAGE($1, $2, $3)", [message, from, to]);
 }
-
-
 
 // handle SIGINT
 export async function onSIGINT() {
   await pool.end();
-  console.log('Pool has ended');
+  console.log("Pool has ended");
 }
 
-process.on('SIGINT', onSIGINT);
+process.on("SIGINT", onSIGINT);
